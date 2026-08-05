@@ -14,6 +14,11 @@ Each "source_discharge_GLACIER_NAME" file consists of a nearly identical workflo
 
 Data required: Raw flow accumulation data from Step 1 at gauge and seismic sites, corrected tremor amplitude (PSD amplitude 1.5-10 Hz and corrected for attenuation), stream gauge records (USGS water data), adjustable parameters - proportional upstream contributing area for each site (% to total contributing area at proglacial gauge) & flow path (seismic site to gauge) for lag
 
-This file will generate a variety of intermediary plots comparing discharges at the gauge (observation, raw flow acc, LSQ model), up-glacier discharge source (raw flow acc sum, area-scaled, ratio-smoothed scaling), etc. 
-It will also generate power-law models (Gimbert theoretical 5/8 exponent and best-fit result) for each site (or site groupings at Lemon Creek) and plot hysteresis time series for individual sites. 
+This file will generate a variety of intermediary plots comparing discharges at the gauge (observation, raw flow acc, LSQ model), up-glacier discharge source (raw flow acc sum, area-scaled, ratio-smoothed scaling), etc. It will also generate power-law models (Gimbert theoretical 5/8 exponent and best-fit result) for each site (or site groupings at Lemon Creek) and plot hysteresis time series for individual sites. 
+
+It will create CSV files containing time series of final corrected tremor amplitude and source subglacial discharge estimated at each site. 
+
+Step 3: Create multi-glacier tremor-discharge model with Monte Carlo sampling procedure (& assess model uncertainty)
+
+
 
