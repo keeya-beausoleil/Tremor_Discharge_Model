@@ -27,7 +27,7 @@ from scipy.optimize import minimize_scalar
 from scipy.stats import t as t_dist
 
 #%%
-# define functions to download and format corrected tremor, stream gauge, and flow accumulation files
+# define functions to import data and format corrected tremor, stream gauge, and flow accumulation files
 def load_file(file_name, file_type):
     temp_file = pd.read_csv(file_name)
     if file_type == "tremor":
@@ -100,6 +100,7 @@ gauge_precip_flux_final = gauge_precip_flux[valid_mask]
 gauge_time_final = gauge_time[valid_mask]
 
 #%%
+# run convolution with tau smoothing window at plausible range for melt and precipitation
 def try_smooths(data,tau_e_max,inc,x2):
     tau_e = np.linspace(1,tau_e_max,tau_e_max)
     og_data = pd.Series(data).copy()
@@ -296,7 +297,7 @@ wolc_model = site_model(wolc_melt_flux,kernel_melt_c,wolc_precip_flux,kernel_pre
 woln_model = site_model(woln_melt_flux,kernel_melt_n,woln_precip_flux,kernel_precip_n,woln_time,gauge_LSQ_best["beta"])
 # %%
 
-# multiply gauge discharge observation by smoothed ratio between gauge model and upstream site model & plot results
+# multiply gauge discharge observations by smoothed ratio between gauge model and upstream site model & plot results
 
 def plot_ratio(gauge_model, site_model,raw_ratio,smoothed_ratio, site_df,site_name):
     fig, ax1 = plt.subplots(figsize=(13,6))
@@ -321,7 +322,7 @@ def plot_ratio(gauge_model, site_model,raw_ratio,smoothed_ratio, site_df,site_na
     h2, l2 = ax2.get_legend_handles_labels()
     ax1.legend(h1 + h2, l1 + l2, loc = "upper right",fontsize=16)
     plt.savefig(f"thesis_figs/{site_name}_ratio_plot.png",dpi=300, transparent=True)
-#%%
+
 def site_ratio(gauge_model, site_model, window_len, discharge,site): 
     site_model["date_time"] = pd.to_datetime(site_model["date_time"]).dt.tz_localize(None)
     gauge_model["date_time"] = pd.to_datetime(gauge_model["date_time"]).dt.tz_localize(None)
@@ -344,10 +345,12 @@ def site_ratio(gauge_model, site_model, window_len, discharge,site):
     plot_ratio(gauge_model_subset, site_model_subset,site_ratio_temp,final_ratio,site_est_df,site)
     return site_est_df
 
-window = 14
+#%%
+window = 14 # days (ratio smoothing window)
 wolc_est_df = site_ratio(gauge_model, wolc_model, window,discharge_df,"WOLC")
 woln_est_df = site_ratio(gauge_model, woln_model, window,discharge_df,"WOLN")
 #%%
+# plot comparison source discharges (area scaled, smoothed ratio scaled, and raw LSQ model) 
 def plot_site_est(site_name, site_est,area_prop,site_model):
     fig, ax1 = plt.subplots(figsize=(13,6))
     ax1.plot(site_model["date_time"], site_model["model"], "--", alpha = 0.6,linewidth = 1,color="#2F96AF", label = "LSQ-Model @ Site")
@@ -368,6 +371,7 @@ def plot_site_est(site_name, site_est,area_prop,site_model):
     plt.savefig(f"thesis_figs/{site_name}_discharge_plot.png",dpi=300, transparent=True)
 
 # %%
+# plot timeseries of corrected tremor amplitude alongside site discharge estimations (ratio scaled result)
 def plot_v_q_timeseries(site_name, q_v_df):
     corr = q_v_df["final_site_est"].corr(q_v_df["T_Amp_corr"])
     fig, ax1 = plt.subplots(figsize=(13,6))
@@ -391,6 +395,7 @@ def plot_v_q_timeseries(site_name, q_v_df):
     plt.savefig(f"thesis_figs/{site_name}_v_q_timeseries_plot.png",dpi=300, transparent=True)
 
 #%%
+# align tremor and discharge time series with transport time lag
 def align_V_Q(site_name,site_est, tremor,lag,area,raw_model):
     
     site_est = site_est.copy()
@@ -569,6 +574,7 @@ plt.show()
 #%%
 
 # %%
+# plot hysteresis plot for each site (colored data points represent timeseries) 
 t_up = np.concatenate([wolc_V_Q_final["date_time"].values])
 t_up = t_up[mask_up]
 
