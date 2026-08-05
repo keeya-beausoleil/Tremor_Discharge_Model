@@ -316,7 +316,7 @@ kernel_precip_l = downscale_tau(((gauge_LSQ_best["smooths"][1]-1)*6)+1,0.181)# l
 kernel_precip_u = downscale_tau(((gauge_LSQ_best["smooths"][1]-1)*6)+1,0.1116) # lower
 # %%
 
-# run model, convolution with scaled tau length and LSQ parameters fit from gauge 
+# run LSQ model at site locations: convolution with scaled tau length and LSQ parameters fit from gauge 
 def site_model(m_flux,kernel_m,p_flux, kernel_p,time,betas):
     smooth_melt = np.convolve(m_flux, kernel_m, 'full')[:len(time)]
     smooth_precip = np.convolve(p_flux, kernel_p, 'full')[:len(time)]
@@ -332,7 +332,7 @@ bbgu_model = site_model(bbgu_melt_flux,kernel_melt_u,bbgu_precip_flux,kernel_pre
 bbeu_model = site_model(bbeu_melt_flux,kernel_melt_u,bbeu_precip_flux,kernel_precip_u,bbeu_time,gauge_LSQ_best["beta"])
 bbwu_model = site_model(bbwu_melt_flux,kernel_melt_u,bbwu_precip_flux,kernel_precip_u,bbwu_time,gauge_LSQ_best["beta"])
 #%%
-# run smoothed ratio between gauge model and upstream site model & plot results
+# multiply gauge discharge observation by smoothed ratio between gauge model and upstream site model & plot results
 def plot_ratio(gauge_model, site_model,raw_ratio,smoothed_ratio, site_df,site_name):
     fig, ax1 = plt.subplots(figsize=(13,6))
     ax1.plot(gauge_model["date_time"], gauge_model["model"], "--", alpha = 0.4,linewidth = 1.25,color="#0B3B4A", label = "Gauge Model")
@@ -432,7 +432,7 @@ def plot_v_q_timeseries(site_name, q_v_df):
     plt.savefig(f"thesis_figs/{site_name}_v_q_timeseries_plot.png",dpi=300, transparent=True)
 
 # %%
-# align tremor and dishcarge with lag (factored by flow path length between sites and gauge)
+# align tremor and discharge with lag (factored by flow path length between sites and gauge)
 def align_V_Q(site_name,site_est, tremor,lag,area,raw_model):
     site_est = site_est.copy()
     tremor = tremor.copy()
@@ -444,8 +444,8 @@ def align_V_Q(site_name,site_est, tremor,lag,area,raw_model):
     plot_v_q_timeseries(site_name, site_V_Q_final)
     return site_V_Q_final
 
-lag_u = round(7800/3600)
-lag_l = round(6300/3600) # 1m/s 6 km upstream of gauge 3600s/hr 
+lag_u = round(7800/3600) # 1 m/s ~7.8 km upstream of gauge 3600s/hr 
+lag_l = round(6300/3600) # 1 m/s ~6.3 km upstream of gauge 3600s/hr 
 
 bbgl_V_Q_final = align_V_Q("BBGL",bbgl_est_df, bbgl_tremor_df,lag_l,0.181,bbgl_model)
 bbgl_V_Q_final.to_csv("bbgl_V_Q_final.csv", index=False)
