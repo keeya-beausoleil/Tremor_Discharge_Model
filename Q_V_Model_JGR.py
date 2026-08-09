@@ -50,6 +50,8 @@ WOLN_df = pd.read_csv("woln_V_Q_final.csv")
 MEND_df = pd.read_csv("ambr_V_Q_final.csv")  
 
 #%%
+
+b_gimbert_inv = 8/5 
 # define various funcions used in plots (colour map generation and text formating) and generating models
 def sci_latex(x):
     s = f"{x:.2e}"
@@ -239,7 +241,6 @@ def create_model(sites):
 k_theor_EM, k_best_EM, b_best_EM= create_model(["Lemon_Creek", "Wolverine","Mendenhall"])
 
 # %%
-b_gimbert_inv = 8/5
 
 def fit_each_site(V, Q):
     alpha = 0.05
