@@ -1,7 +1,11 @@
 This repository offers a complete library of files used to generate results for Quantifying Subglacial Water Flow Using Glaciohydraulic Tremor: A Multi-glacier Empirical Model
 by Keeya S. Beausoleil, Timothy C. Bartholomaus, Alison S. Criscitiello, Elowyn M. Yager 
 
-Part 2: Hydrological Modelling 
+
+Part 1 --  Seismic Analysis & Source-Receiver Corrections -------
+Step 1: PSD 
+
+Part 2 -- Hydrological Modelling -----
 
 Step 1: Calculate raw flow accumulation time series for degree-day modelled melt and precipitation at each site and downstream gauge location. 
 Each "raw_flow_acc_GLACIER_NAME" file consists of a similar workflow.
