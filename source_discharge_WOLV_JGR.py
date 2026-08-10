@@ -1,5 +1,5 @@
 #%%
-# import packages
+# import package
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
@@ -27,7 +27,7 @@ from scipy.optimize import minimize_scalar
 from scipy.stats import t as t_dist
 
 #%%
-# define functions to import data and format corrected tremor, stream gauge, and flow accumulation files
+# define functions to download and format corrected tremor, stream gauge, and flow accumulation files
 def load_file(file_name, file_type):
     temp_file = pd.read_csv(file_name)
     if file_type == "tremor":
@@ -90,6 +90,8 @@ discharge = discharge[len_test:]
 gauge_melt_flux= gauge_melt_flux[len_test:]
 gauge_precip_flux = gauge_precip_flux[len_test:]
 gauge_time = gauge_time[len_test:]
+
+print(gauge_time)
 #%%
 # mask Nan data from any datasets
 valid_mask = (~np.isnan(discharge) &~np.isnan(gauge_melt_flux) & ~np.isnan(gauge_precip_flux))
@@ -100,7 +102,6 @@ gauge_precip_flux_final = gauge_precip_flux[valid_mask]
 gauge_time_final = gauge_time[valid_mask]
 
 #%%
-# run convolution with tau smoothing window at plausible range for melt and precipitation
 def try_smooths(data,tau_e_max,inc,x2):
     tau_e = np.linspace(1,tau_e_max,tau_e_max)
     og_data = pd.Series(data).copy()
@@ -115,11 +116,15 @@ def try_smooths(data,tau_e_max,inc,x2):
         smooth_df[f"smooth: {tau_e} tau "] = np.convolve(data, kernel, 'full')[:len(x2)]
     return smooth_df
 
-gauge_melt_smooths = try_smooths(gauge_melt_flux_final,24, 1,gauge_time_final)
-#gauge_melt_smooths = try_smooths(gauge_melt_flux_final,14, 1,gauge_time_final)
+#gauge_melt_smooths = try_smooths(gauge_melt_flux_final,24*5, 1,gauge_time_final)
+#gauge_precip_smooths= try_smooths(gauge_precip_flux_final,24*80, 6,gauge_time_final)
 
-gauge_precip_smooths= try_smooths(gauge_precip_flux_final,24*40, 6,gauge_time_final)
-#gauge_precip_smooths= try_smooths(gauge_precip_flux_final,24*3+12, 6,gauge_time_final) -- Best Fit 14 // 14 (79)
+gauge_melt_smooths = try_smooths(gauge_melt_flux_final,15, 1,gauge_time_final)
+gauge_precip_smooths= try_smooths(gauge_precip_flux_final,24*3+18, 6,gauge_time_final) 
+# # Best Fit 09/09/2026
+# optimal 15 // 15 (85) 
+# late season 10 // 5 (25)
+# all season  120 // 32 (187)
 #%%
 # find best-fit smoothing windows and LSQ scaling model 
 def gauge_LSQ(melt_smooths, precip_smooths, gauge_obs, time):
@@ -145,6 +150,11 @@ def gauge_LSQ(melt_smooths, precip_smooths, gauge_obs, time):
                 model_df = pd.DataFrame({"date_time": time,"model": model})
     return best, model_df
 gauge_LSQ_best, gauge_model = gauge_LSQ(gauge_melt_smooths, gauge_precip_smooths, discharge_final,gauge_time_final)
+
+best_i, best_j = gauge_LSQ_best["smooths"]
+tau_m_best = best_i ; tau_p_best = 6 * best_j - 5 
+
+print(f"Best fit: tau_m = {tau_m_best}, tau_p = {best_j, tau_p_best}")
 
 # %%
 # Intermediate check: compare raw flow accumulation, best LSQ model, and observations at gauge
@@ -297,7 +307,7 @@ wolc_model = site_model(wolc_melt_flux,kernel_melt_c,wolc_precip_flux,kernel_pre
 woln_model = site_model(woln_melt_flux,kernel_melt_n,woln_precip_flux,kernel_precip_n,woln_time,gauge_LSQ_best["beta"])
 # %%
 
-# multiply gauge discharge observations by smoothed ratio between gauge model and upstream site model & plot results
+# multiply gauge discharge observation by smoothed ratio between gauge model and upstream site model & plot results
 
 def plot_ratio(gauge_model, site_model,raw_ratio,smoothed_ratio, site_df,site_name):
     fig, ax1 = plt.subplots(figsize=(13,6))
@@ -322,7 +332,7 @@ def plot_ratio(gauge_model, site_model,raw_ratio,smoothed_ratio, site_df,site_na
     h2, l2 = ax2.get_legend_handles_labels()
     ax1.legend(h1 + h2, l1 + l2, loc = "upper right",fontsize=16)
     plt.savefig(f"thesis_figs/{site_name}_ratio_plot.png",dpi=300, transparent=True)
-
+#%%
 def site_ratio(gauge_model, site_model, window_len, discharge,site): 
     site_model["date_time"] = pd.to_datetime(site_model["date_time"]).dt.tz_localize(None)
     gauge_model["date_time"] = pd.to_datetime(gauge_model["date_time"]).dt.tz_localize(None)
@@ -345,12 +355,10 @@ def site_ratio(gauge_model, site_model, window_len, discharge,site):
     plot_ratio(gauge_model_subset, site_model_subset,site_ratio_temp,final_ratio,site_est_df,site)
     return site_est_df
 
-#%%
-window = 14 # days (ratio smoothing window)
+window = 14
 wolc_est_df = site_ratio(gauge_model, wolc_model, window,discharge_df,"WOLC")
 woln_est_df = site_ratio(gauge_model, woln_model, window,discharge_df,"WOLN")
 #%%
-# plot comparison source discharges (area scaled, smoothed ratio scaled, and raw LSQ model) 
 def plot_site_est(site_name, site_est,area_prop,site_model):
     fig, ax1 = plt.subplots(figsize=(13,6))
     ax1.plot(site_model["date_time"], site_model["model"], "--", alpha = 0.6,linewidth = 1,color="#2F96AF", label = "LSQ-Model @ Site")
@@ -371,7 +379,6 @@ def plot_site_est(site_name, site_est,area_prop,site_model):
     plt.savefig(f"thesis_figs/{site_name}_discharge_plot.png",dpi=300, transparent=True)
 
 # %%
-# plot timeseries of corrected tremor amplitude alongside site discharge estimations (ratio scaled result)
 def plot_v_q_timeseries(site_name, q_v_df):
     corr = q_v_df["final_site_est"].corr(q_v_df["T_Amp_corr"])
     fig, ax1 = plt.subplots(figsize=(13,6))
@@ -395,7 +402,6 @@ def plot_v_q_timeseries(site_name, q_v_df):
     plt.savefig(f"thesis_figs/{site_name}_v_q_timeseries_plot.png",dpi=300, transparent=True)
 
 #%%
-# align tremor and discharge time series with transport time lag
 def align_V_Q(site_name,site_est, tremor,lag,area,raw_model):
     
     site_est = site_est.copy()
@@ -574,7 +580,6 @@ plt.show()
 #%%
 
 # %%
-# plot hysteresis plot for each site (colored data points represent timeseries) 
 t_up = np.concatenate([wolc_V_Q_final["date_time"].values])
 t_up = t_up[mask_up]
 
@@ -608,8 +613,8 @@ def hysteresis(x,y,t, xx,k_theor,k_best, b_best,cc, site_area):
     k_offsets2 = np.geomspace(k_min2 / 4, k_max2 * 4, n_lines)
 
     for i, (k1, k2) in enumerate(zip(k_offsets1, k_offsets2)):
-        label1 = "V ∝ Q$^{5/8}$"
-        label2 = "V ∝ Q$^{14/6}$"
+        label1 = "V ∝ Q$^{5/8}$" if i == 0 else '_nolegend_'
+        label2 = "V ∝ Q$^{14/6}$" if i == 0 else '_nolegend_'
         ax.plot(k1 * xx**b_gimbert_inv1, xx, color = "#575757", alpha=0.35, lw=2, label=label1, zorder=1)
         ax.plot(k2 * xx**b_gimbert_inv2, xx, color='red', alpha=0.35, lw=2, label=label2, zorder=1)
 
@@ -649,8 +654,10 @@ def hysteresis(x,y,t, xx,k_theor,k_best, b_best,cc, site_area):
     cbar.ax.yaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
     cbar.set_label("Date (2022)", fontsize=20,labelpad=7)
     cbar.ax.tick_params(labelsize=15)
-    plt.savefig(f"thesis_figs/WOLV_{site_area}_hyst_plot.png", dpi=300, transparent=True,bbox_inches='tight')
+    plt.savefig(f"thesis_figs/WOLV_{site_area}_hyst_plot_JGR.png", dpi=300, transparent=True,bbox_inches='tight')
     plt.show()
 
 hysteresis(x_up,y_up,t_up, xx_up,k_theor_up,k_best_up, b_best_up,"#872200", "Upper")
 hysteresis(x_low,y_low,t_low, xx_low,k_theor_low,k_best_low, b_best_low,"#214EAF", "Lower")
+
+# %%
