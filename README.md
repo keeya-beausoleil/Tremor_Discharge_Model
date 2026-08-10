@@ -3,7 +3,10 @@ by Keeya S. Beausoleil, Timothy C. Bartholomaus, Alison S. Criscitiello, Elowyn 
 
 
 Part 1 --  Seismic Analysis & Source-Receiver Corrections -------
-Step 1: PSD 
+
+Step 1: PSD for 1.5 - 10 Hz (see MedSpec repository referenced in manuscript for workflow) 
+Step 2: Know seismic station locations and expected conduit path (ie. RGI centerline), then determine ice thicknesses @ *source* locations
+Step 3: Complete corrections for geometric spreading & anelastic attenuation 
 
 Part 2 -- Hydrological Modelling -----
 
@@ -19,7 +22,7 @@ Step 2: Estimate source discharge at glacier seismic sites using the smoothed ra
 Each "source_discharge_GLACIER_NAME" file consists of a nearly identical workflow. They differ in specified raw files and duration of interest, developed individually for ease of troubleshooting and flexibility in development. 
 
 - Intermediary Process: find best-fit smoothing windows -
-Code is built to find best-fit exponential smoothing combination of both the melt & precipitation datasets, however, in testing we determined these windows should be determined in peak melt, once the drainage system had been established (as to not impacted by snow buffering or inefficient, distributed drainage), therefore, I manually capped the iterations at the best-fit. This can be easily streamlined for improved efficiency; however, the current file contains the basic workflow with this manual choice. 
+Code is built to find best-fit exponential smoothing combination of both the melt & precipitation datasets; however, in testing we determined these windows should be determined in peak melt, once the drainage system had been established (as to not be impacted by snow buffering or inefficient, distributed drainage), therefore, I manually capped the iterations at the best-fit. This can be easily streamlined for improved efficiency; however, the current file contains the basic workflow with this manual choice. 
 
 Data required: Raw flow accumulation data from Step 1 at gauge and seismic sites, corrected tremor amplitude (PSD amplitude 1.5-10 Hz and corrected for attenuation), stream gauge records (USGS water data), adjustable parameters - proportional upstream contributing area for each site (% to total contributing area at proglacial gauge) & flow path (seismic site to gauge) for lag
 
@@ -27,7 +30,12 @@ This file will generate a variety of intermediary plots comparing discharges at 
 
 It will create CSV files containing time series of final corrected tremor amplitude and source subglacial discharge estimated at each site. 
 
-Step 3: Create multi-glacier tremor-discharge model with Monte Carlo sampling procedure (& assess model uncertainty)
+Part 3 -- Empricial Tremor-Discharge Model -----
 
+Step 1: Create multi-glacier tremor-discharge model with Monte Carlo sampling procedure (& assess model uncertainty)
+(figure out minimum # of samples) 
+
+
+Part 4 --  Model Performance & Uncertainty Testing -----
 
 
