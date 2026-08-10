@@ -18,6 +18,9 @@ This process will save CSV files containing a time series of accumulated melt an
 Step 2: Estimate source discharge at glacier seismic sites using the smoothed ratio method. 
 Each "source_discharge_GLACIER_NAME" file consists of a nearly identical workflow. They differ in specified raw files and duration of interest, developed individually for ease of troubleshooting and flexibility in development. 
 
+- Intermediary Process: find best-fit smoothing windows -
+Code is built to find best-fit exponential smoothing combination of both the melt & precipitation datasets, however, in testing we determined these windows should be determined in peak melt, once the drainage system had been established (as to not impacted by snow buffering or inefficient, distributed drainage), therefore, I manually capped the iterations at the best-fit. This can be easily streamlined for improved efficiency; however, the current file contains the basic workflow with this manual choice. 
+
 Data required: Raw flow accumulation data from Step 1 at gauge and seismic sites, corrected tremor amplitude (PSD amplitude 1.5-10 Hz and corrected for attenuation), stream gauge records (USGS water data), adjustable parameters - proportional upstream contributing area for each site (% to total contributing area at proglacial gauge) & flow path (seismic site to gauge) for lag
 
 This file will generate a variety of intermediary plots comparing discharges at the gauge (observation, raw flow acc, LSQ model), up-glacier discharge source (raw flow acc sum, area-scaled, ratio-smoothed scaling), etc. It will also generate power-law models (Gimbert theoretical 5/8 exponent and best-fit result) for each site (or site groupings at Lemon Creek) and plot hysteresis time series for individual sites. 
